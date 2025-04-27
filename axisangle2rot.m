@@ -4,5 +4,5 @@ function R = axisangle2rot(omega,theta)
  %                theta is a scalar 
  %                omega is a unit vector
      W = skewSymmetric(omega);
-     R = eye(3) + sin(theta)*W + (1-cos(theta))*W^2 ;
+     R = eye(3) + sin(theta)*W + (1-cos(theta))*(W*W) ;
 end

@@ -1,15 +1,15 @@
 function p_i = func_pi(theta)
 
-    alpha = theta.alpha;
-    d1 = theta.d1;
-    d2 = theta.d2;
-    d3 = theta.d3;
-    s12 = theta.s12;
-    s23 = theta.s23;
-    s13 = theta.s13;
-    t1 = theta.t1;
-    t2 = theta.t2;
-    t3 = theta.t3;
+    alpha = theta(1);
+    d1 = theta(2);
+    d2 = theta(3);
+    d3 = theta(4);
+    s12 = theta(5);
+    s23 = theta(6);
+    s13 = theta(7);
+    t1 = theta(8);
+    t2 = theta(9);
+    t3 = theta(10);
     
     e = exp(1);
 
