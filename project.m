@@ -24,7 +24,7 @@ for i=1:20
     
     beta = [rand(1),rand(1),rand(1)];
     beta = beta / norm(beta);
-    theta_r = rand(1) * 2 * pi;
+    theta_r = rand(1)^(1/3) * 2 * pi;
     R = axisangle2rot(beta,theta_r);
     
     I_rot = R*D*R';
@@ -72,29 +72,33 @@ for i=1:20
     
     
     
-    %options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt','Display','iter');%,'MaxIterations','50');
-    options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective','MaxIterations',50);
+    options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt','MaxIterations',50);
+    %options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective','MaxIterations',50);
     %[pi_, a, b, c, output]  = lsqnonlin(@(pi) getResidual(acc,twist_avg,w,t,pi_),pi_init,[],[],options);
     [theta, a, b, c, output]  = lsqnonlin(@(theta) getResidual(acc,twist_avg,w,t,func_pi(theta)),theta_init,[],[],options);
-    output.iterations
+    output.iterations;
     
     pi_ = func_pi(theta);
     
     residuals = [residuals, pi_actual-pi_];
     iterations = [iterations, output.iterations];
     
-    
-    [t2, twist_pred] = ode23t(@(t, twist) forwardDynamics(twist,t,w,piToInertiaMatrix(pi_)),timeSpan,initialTwist);
 
+% [t2, twist_pred] = ode23t(@(t, twist) forwardDynamics(twist,t,w,piToInertiaMatrix(pi_)),timeSpan,initialTwist);
+% plot(t,twist, Marker=".")
+% input("show pred")
+% hold on
+% plot(t2,twist_pred)
+% legend('twist actual 1','twist actual 2','twist actual 3','twist actual 4','twist actual 5','twist actual 6',...
+%        'twist pred 1','twist pred 2','twist pred 3','twist pred 4','twist pred 5','twist pred 6')
+% xlabel('t');
+% ylabel('twist');
+% 
+% input("continue")
+% 
+% clf;
+    
 end
 
 histogram(iterations)
 
-
-%plot(t2,twist_pred)
-%hold on
-%plot(t,twist, Marker=".")
-%legend('twist actual 1','twist actual 2','twist actual 3','twist actual 4','twist actual 5','twist actual 6',...
-%        'twist pred 1','twist pred 2','twist pred 3','twist pred 4','twist pred 5','twist pred 6')
-%xlabel('t');
-%ylabel('twist');
