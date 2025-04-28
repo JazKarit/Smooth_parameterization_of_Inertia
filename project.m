@@ -1,10 +1,17 @@
+%% 
+
+method = 'log-cholesky';
+method = 'normal';
+
+%%
 clear;clc;clear all;
 
 
-residuals = [];
+pi_err = [];
 iterations = [];
+res_norms = [];
 
-for i=1:20
+for i=1:100
     pi_actual = zeros(10,1);
     pi_actual(1) = sample_rand(0.01,1);
     pi_actual(2) = sample_rand(-.5,.5);
@@ -19,12 +26,9 @@ for i=1:20
     
     D = diag(d);
     
-    
-    
-    
     beta = [rand(1),rand(1),rand(1)];
     beta = beta / norm(beta);
-    theta_r = rand(1)^(1/3) * 2 * pi;
+    theta_r = (rand(1))^(1/3) * (2*pi);
     R = axisangle2rot(beta,theta_r);
     
     I_rot = R*D*R';
@@ -44,45 +48,45 @@ for i=1:20
     
     timeSpan = [0 2*pi];
     initialTwist = [0;0;0;0;0;0];
+
     [t, twist] = ode23t(@(t, twist) forwardDynamics(twist,t,w,I),timeSpan,initialTwist);
     
     
-    %noise = sample_rand(.075,.125,size(twist));
+    noise = sample_rand(.075,.125,size(twist));
     
-    noise = sample_rand(-0.001,0.001,size(twist));
+    %noise = sample_rand(-0.001,0.001,size(twist));
     
-    twist_noisy = twist;% + noise;
+    twist_noisy = twist + noise;
     twist_noisy = twist_noisy';
     twist = twist';
     
+    % Define a uniform time grid
+    dt = 0.1; % or any fixed step you want (matching the paper)
+    t_uniform = (0:dt:2*pi)'; % column vector
     
+    % Interpolate twist onto the uniform grid
+    twist_noisy_interp = interp1(t, twist_noisy', t_uniform, 'linear')'; % interpolate each row
+    twist_interp = interp1(t, twist', t_uniform, 'linear')'; % clean (optional)
     
-    acc = zeros(6,size(twist_noisy,2)-1);
-    twist_avg = zeros(6,size(twist_noisy,2)-1);
+    acc = diff(twist_noisy,1,2) / dt;
+    twist_avg = (twist_noisy(:,1:end-1) + twist_noisy(:,2:end))/2;
+
     
-    for i = 1:size(twist_noisy,2)-1
-        acc(:,i) = (twist_noisy(:,i+1) - twist_noisy(:,i)) / (t(i+1)-t(i));
-        twist_avg(:,i) = (twist_noisy(:,i+1) + twist_noisy(:,i)) / 2;
-    end
+    [pi_, iterations_,res_norm] = log_cholesky_estimation(acc,twist_avg,w,t);
+
+    %[pi_, iterations_,res_norm] = regular_estimation(acc,twist_avg,w,t);
     
-    pi_init = [1 0 0 0 1 1 1 0 0 0]';
+    %pi_actual-pi_
+    pi_err = [pi_err, norm(pi_actual-pi_)];
+    res_norms = [res_norms, res_norm];
+
+    % if norm(pi_actual-pi_) > 0.1
+    %     iterations_ = 52;
+    % end
+
+    iterations = [iterations, iterations_];
     
-    theta_init = [-log(2)/2 0 0 0 0 0 0 0 0 0]';
-    %func_pi(theta_init)
-    
-    
-    
-    options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt','MaxIterations',50);
-    %options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective','MaxIterations',50);
-    %[pi_, a, b, c, output]  = lsqnonlin(@(pi) getResidual(acc,twist_avg,w,t,pi_),pi_init,[],[],options);
-    [theta, a, b, c, output]  = lsqnonlin(@(theta) getResidual(acc,twist_avg,w,t,func_pi(theta)),theta_init,[],[],options);
-    output.iterations;
-    
-    pi_ = func_pi(theta);
-    
-    residuals = [residuals, pi_actual-pi_];
-    iterations = [iterations, output.iterations];
-    
+   
 
 % [t2, twist_pred] = ode23t(@(t, twist) forwardDynamics(twist,t,w,piToInertiaMatrix(pi_)),timeSpan,initialTwist);
 % plot(t,twist, Marker=".")
@@ -101,4 +105,5 @@ for i=1:20
 end
 
 histogram(iterations)
+% histogram(pi_err)
 
