@@ -11,36 +11,15 @@ pi_err = [];
 iterations = [];
 res_norms = [];
 
-for i=1:100
-    pi_actual = zeros(10,1);
-    pi_actual(1) = sample_rand(0.01,1);
-    pi_actual(2) = sample_rand(-.5,.5);
-    pi_actual(3) = sample_rand(-.5,.5);
-    pi_actual(4) = sample_rand(-.5,.5);
-    
-    L = [sample_rand(0.01,1);
-         sample_rand(0.01,1);
-         sample_rand(0.01,1)];
-    
-    d = [L(2)+L(3), L(1)+L(3), L(1)+L(2)]';
-    
-    D = diag(d);
-    
-    beta = [rand(1),rand(1),rand(1)];
-    beta = beta / norm(beta);
-    theta_r = (rand(1))^(1/3) * (2*pi);
-    R = axisangle2rot(beta,theta_r);
-    
-    I_rot = R*D*R';
-    
-    pi_actual(5) = I_rot(1,1);
-    pi_actual(6) = I_rot(2,2);
-    pi_actual(7) = I_rot(3,3);
-    pi_actual(8) = I_rot(1,2);
-    pi_actual(9) = I_rot(2,3);
-    pi_actual(10) = I_rot(1,3);
+for i=1:1000
+    pi_actual = generateRandomParameters();
     
     h = pi_actual(2:4)';
+
+    I_rot = [pi_actual(5) pi_actual(8) pi_actual(10);
+             pi_actual(8) pi_actual(6) pi_actual(9);
+             pi_actual(10) pi_actual(9) pi_actual(7);];
+
     I = [I_rot, skewSymmetric(h);
          skewSymmetric(h)', pi_actual(1)*eye(3)];
     
@@ -75,6 +54,8 @@ for i=1:100
     [pi_, iterations_,res_norm] = log_cholesky_estimation(acc,twist_avg,w,t);
 
     %[pi_, iterations_,res_norm] = regular_estimation(acc,twist_avg,w,t);
+
+    %[pi_, iterations_, res_norm] = eigenvalue_estimation(acc,twist_avg,w,t);
     
     %pi_actual-pi_
     pi_err = [pi_err, norm(pi_actual-pi_)];
@@ -106,4 +87,5 @@ end
 
 histogram(iterations)
 % histogram(pi_err)
+
 
